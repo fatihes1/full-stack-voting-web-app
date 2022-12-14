@@ -14,15 +14,15 @@ export const redisModule = RedisModule.registerAsync({
         port: configService.get('REDIS_PORT'),
       },
       onClientReady: (client) => {
-        logger.log('Redis client is ready to use');
+        logger.log('--> Redis client is ready to use');
 
         client.on('error', (err) => {
-          logger.error('Redis Client error: ', err);
+          logger.error('--> Redis Client error: ', err);
         });
 
         client.on('connect', () => {
           logger.log(
-            `Connected to redis on ${configService.get(
+            `--> Connected to redis on ${configService.get(
               'REDIS_HOST',
             )}:${configService.get('REDIS_PORT')}`,
           );
