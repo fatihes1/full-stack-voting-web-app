@@ -13,11 +13,10 @@ async function bootstrap() {
   const CLIENT_PORT = configService.get('CLIENT_PORT');
   app.enableCors({
     origin: [
-        `http://localhost:${CLIENT_PORT}`,
-        new RegExp(`^http://192\\.168\\.1\\.([1-9]|[1-9]\\d):${CLIENT_PORT}$/`),
+      `http://localhost:${CLIENT_PORT}`,
+      new RegExp(`^http://192\\.168\\.1\\.([1-9]|[1-9]\\d):${CLIENT_PORT}$/`),
     ],
-  })
-
+  });
 
   await app.listen(port);
 
