@@ -1,4 +1,5 @@
 // Define some parameters for incoming fields to our service methods.
+import { Request } from '@nestjs/common';
 
 // SERVICE TYPES
 export type CreatePollFields = {
@@ -31,3 +32,11 @@ export type AddParticipantData = {
   userID: string;
   name: string;
 };
+
+// GUARD TYPES
+type AuthPayload = {
+  userID: string;
+  pollID: string;
+  name: string;
+};
+export type RequestWithAuth = Request & AuthPayload; // -> Merge the AuthPayload type with the Request type

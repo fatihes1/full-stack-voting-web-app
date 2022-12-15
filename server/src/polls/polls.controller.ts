@@ -1,6 +1,8 @@
-import { Controller, Post, Body } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Req } from '@nestjs/common';
 import { CreatePollDto, JoinPollDto } from './dtos';
 import { PollsService } from './polls.service';
+import { ControllerAuthGuard } from './controller-auth.guard';
+import { RequestWithAuth } from './types';
 
 @Controller({ path: 'polls' })
 export class PollsController {
@@ -19,14 +21,15 @@ export class PollsController {
     return result;
   }
 
+  // Except JWT token
+  // In guard we get necessary data from request body mean from JWT token
+  // If request pass guard then we can get data from request body and use it in controller
+  @UseGuards(ControllerAuthGuard)
   @Post('/rejoin')
-  async rejoin() {
-    const dummyData = {
-      name: 'From Token',
-      pollID: 'From Token',
-      userID: 'Guess where this came from',
-    };
-    const result = await this.pollsService.rejoinPoll(dummyData);
+  async rejoin(@Req() request: RequestWithAuth) {
+    // After guard we have 'request' variable that container our data from JWT token
+    const { userID, pollID, name } = request;
+    const result = await this.pollsService.rejoinPoll({ userID, pollID, name });
     return result;
   }
 }
