@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
 import { CreatePollFields, JoinPollFields, RejoinPollFields } from './types';
 import { createPollID, createUserID } from '../ids';
 import { PollsRepository } from './polls.repository';
@@ -9,7 +10,10 @@ export class PollsService {
 
   // we defined the PollsRepository as a 'provider' in the 'PollsModule'
   // Now we want to use pollRepository in the PollsService, so we can 'inject' it into the 'constructor'
-  constructor(private readonly pollsRepository: PollsRepository) {}
+  constructor(
+    private readonly pollsRepository: PollsRepository,
+    private readonly jwtService: JwtService,
+  ) {}
 
   async createPoll(fields: CreatePollFields) {
     const pollID = createPollID();
@@ -21,11 +25,23 @@ export class PollsService {
       userID,
     });
 
-    // TODO: create an accessToken based off of the pollID and userID
+    this.logger.debug(
+      `Creating token string for user with ID: ${userID} for poll with ID: ${pollID}`,
+    );
+
+    const signedString = this.jwtService.sign(
+      {
+        pollID: createdPoll.id,
+        name: fields.name,
+      },
+      {
+        subject: userID,
+      },
+    );
 
     return {
       poll: createdPoll,
-      // accessToken,
+      accessToken: signedString,
     };
   }
 
@@ -38,11 +54,23 @@ export class PollsService {
 
     const joinedPoll = await this.pollsRepository.getPoll(fields.pollID);
 
-    // TODO: Create access token!
+    this.logger.debug(
+      `Creating token string for user with ID: ${userID} for poll with ID: ${joinedPoll.id}`,
+    );
+
+    const signedString = this.jwtService.sign(
+      {
+        pollID: joinedPoll.id,
+        name: fields.name,
+      },
+      {
+        subject: userID,
+      },
+    );
 
     return {
       poll: joinedPoll,
-      // accessToken: signedString (JWT),
+      accessToken: signedString,
     };
   }
 

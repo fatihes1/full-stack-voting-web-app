@@ -1,6 +1,7 @@
 import { Logger } from '@nestjs/common'; // will log that our redis has been connected
 import { ConfigModule, ConfigService } from '@nestjs/config'; // will allow us to get access to environment variables (.env)
 import { RedisModule } from './redis.module'; // will allow us to get access to our redis module (we created)
+import { JwtModule } from '@nestjs/jwt'; // will allow us to get access to our jwt module (we created)
 
 export const redisModule = RedisModule.registerAsync({
   imports: [ConfigModule],
@@ -30,5 +31,16 @@ export const redisModule = RedisModule.registerAsync({
       },
     };
   },
+  inject: [ConfigService],
+});
+
+export const jwtModule = JwtModule.registerAsync({
+  imports: [ConfigModule],
+  useFactory: async (configService: ConfigService) => ({
+    secret: configService.get<string>('JWT_SECRET'),
+    signOptions: {
+      expiresIn: parseInt(configService.get<string>('POLL_DURATION')),
+    },
+  }),
   inject: [ConfigService],
 });
