@@ -11,13 +11,12 @@ import {
   OnGatewayConnection,
   OnGatewayDisconnect,
   WebSocketServer,
-  WsException,
   SubscribeMessage,
 } from '@nestjs/websockets';
 import { PollsService } from './polls.service';
 import { Namespace } from 'socket.io';
 import { SocketWithAuth } from './types';
-import { WsBadRequestException } from '../exceptions/ws-exceptions';
+
 import { WsCatchAllFilter } from '../exceptions/ws-catch-all-filter';
 
 @UsePipes(new ValidationPipe())
@@ -29,7 +28,7 @@ export class PollsGateway
   private readonly logger = new Logger(PollsGateway.name);
   constructor(private readonly pollsService: PollsService) {} // --> Inject service
 
-  @WebSocketServer() io: Namespace; // --> This is the socket-io namespace
+  @WebSocketServer() io: Namespace; // --> This is the socket-io name-space
   // Namespace used to emit events to all clients in the namespace!
 
   // Gateway initialized (provided in module and instantiated)
@@ -62,13 +61,13 @@ export class PollsGateway
     this.logger.debug(`#SOCKET SAY: Total clients: ${sockets.size}`);
   }
 
-  @SubscribeMessage('deneme')
-  async handleDeneme(client: any, payload: any) {
+  @SubscribeMessage('test')
+  async handleTest(client: any, payload: any) {
     this.logger.log(
-      `#SOCKET SAY: Deneme message received: ${payload} from ${client.id}`,
+      `#SOCKET SAY: Test message received: ${payload} from ${client.id}`,
     );
     if (payload === 'error') {
-      this.logger.log(`#SOCKET SAY: Deneme message error`);
+      this.logger.log(`#SOCKET SAY: Test message error`);
       throw new BadRequestException({ test: 'test' });
     }
   }
