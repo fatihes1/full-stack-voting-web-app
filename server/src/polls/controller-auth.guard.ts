@@ -6,6 +6,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { RequestWithAuth } from './types';
 
 @Injectable()
 export class ControllerAuthGuard implements CanActivate {
@@ -16,10 +17,11 @@ export class ControllerAuthGuard implements CanActivate {
   // Mean if we return a true or a promise that return true or a promise that resolve to true
   // Then the request will be allowed to proceed by this controller or this guard otherwise it will be rejected (block)
   canActivate(context: ExecutionContext): boolean | Promise<boolean> {
-    const request = context.switchToHttp().getRequest();
+    const request: RequestWithAuth = context.switchToHttp().getRequest();
 
     this.logger.debug(`Checking for auth token on request body`, request.body);
 
+    // In project this token will be sent in the request 'bearer' header
     const { accessToken } = request.body;
 
     try {

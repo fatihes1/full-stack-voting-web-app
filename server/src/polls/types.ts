@@ -1,5 +1,6 @@
 // Define some parameters for incoming fields to our service methods.
-import { Request } from '@nestjs/common';
+import { Request } from 'express';
+import { Socket } from 'socket.io';
 
 // SERVICE TYPES
 export type CreatePollFields = {
@@ -40,3 +41,4 @@ type AuthPayload = {
   name: string;
 };
 export type RequestWithAuth = Request & AuthPayload; // -> Merge the AuthPayload type with the Request type
+export type SocketWithAuth = Socket & AuthPayload; // -> Merge the AuthPayload type with the Socket type

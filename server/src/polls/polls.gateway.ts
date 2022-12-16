@@ -7,7 +7,8 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 import { PollsService } from './polls.service';
-import { Namespace, Socket } from 'socket.io';
+import { Namespace } from 'socket.io';
+import { SocketWithAuth } from './types';
 
 @WebSocketGateway({ namespace: 'polls' }) // --> This decorates provides the namespace
 export class PollsGateway
@@ -25,8 +26,12 @@ export class PollsGateway
   }
 
   // These client will actually be a socket-io client
-  handleConnection(client: Socket) {
+  handleConnection(client: SocketWithAuth) {
     const sockets = this.io.sockets; // --> Get access all sockets in the namespace
+
+    this.logger.debug(
+      `---> Socket connected with userId: ${client.userID}, pollId: ${client.pollID}, and name : ${client.name}`,
+    );
 
     this.logger.log(`#SOCKET SAY: Client connected: ${client.id}`);
     this.logger.log(`#SOCKET SAY: Total clients: ${sockets.size}`);
@@ -34,8 +39,12 @@ export class PollsGateway
     this.io.emit('hello', `from ${client.id}`); // --> Emit event to all clients in the namespace
   }
 
-  handleDisconnect(client: Socket) {
+  handleDisconnect(client: SocketWithAuth) {
     const sockets = this.io.sockets; // --> Get access all sockets in the namespace
+
+    this.logger.debug(
+      `---> Socket disconnected with userId: ${client.userID}, pollId: ${client.pollID}, and name : ${client.name}`,
+    );
 
     this.logger.log(`#SOCKET SAY: Client disconnected: ${client.id}`);
     this.logger.debug(`#SOCKET SAY: Total clients: ${sockets.size}`);
