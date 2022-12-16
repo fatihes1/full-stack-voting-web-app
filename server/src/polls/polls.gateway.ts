@@ -1,15 +1,27 @@
-import { Logger } from '@nestjs/common';
+import {
+  BadRequestException,
+  Logger,
+  UseFilters,
+  UsePipes,
+  ValidationPipe,
+} from '@nestjs/common';
 import {
   OnGatewayInit,
   WebSocketGateway,
   OnGatewayConnection,
   OnGatewayDisconnect,
   WebSocketServer,
+  WsException,
+  SubscribeMessage,
 } from '@nestjs/websockets';
 import { PollsService } from './polls.service';
 import { Namespace } from 'socket.io';
 import { SocketWithAuth } from './types';
+import { WsBadRequestException } from '../exceptions/ws-exceptions';
+import { WsCatchAllFilter } from '../exceptions/ws-catch-all-filter';
 
+@UsePipes(new ValidationPipe())
+@UseFilters(new WsCatchAllFilter())
 @WebSocketGateway({ namespace: 'polls' }) // --> This decorates provides the namespace
 export class PollsGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
@@ -48,5 +60,16 @@ export class PollsGateway
 
     this.logger.log(`#SOCKET SAY: Client disconnected: ${client.id}`);
     this.logger.debug(`#SOCKET SAY: Total clients: ${sockets.size}`);
+  }
+
+  @SubscribeMessage('deneme')
+  async handleDeneme(client: any, payload: any) {
+    this.logger.log(
+      `#SOCKET SAY: Deneme message received: ${payload} from ${client.id}`,
+    );
+    if (payload === 'error') {
+      this.logger.log(`#SOCKET SAY: Deneme message error`);
+      throw new BadRequestException({ test: 'test' });
+    }
   }
 }

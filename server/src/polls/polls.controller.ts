@@ -1,9 +1,18 @@
-import { Controller, Post, Body, UseGuards, Req } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  UseGuards,
+  Req,
+  UsePipes,
+  ValidationPipe,
+} from '@nestjs/common';
 import { CreatePollDto, JoinPollDto } from './dtos';
 import { PollsService } from './polls.service';
 import { ControllerAuthGuard } from './controller-auth.guard';
 import { RequestWithAuth } from './types';
 
+@UsePipes(new ValidationPipe())
 @Controller({ path: 'polls' })
 export class PollsController {
   // We can access Injected (Injectable) services in the controller by using the constructor
