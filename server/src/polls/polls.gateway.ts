@@ -91,7 +91,7 @@ export class PollsGateway
       `Total clients connected to room '${roomName}': ${clientCount}`,
     );
 
-    // updatedPoll could be undefined if the the poll already started
+    // updatedPoll could be undefined if the  poll already started
     // in this case, the socket is disconnect, but no the poll state
     if (updatedPoll) {
       this.io.to(pollID).emit('poll_updated', updatedPoll);
@@ -184,5 +184,26 @@ export class PollsGateway
     });
 
     this.io.to(client.pollID).emit('poll_updated', updatedPoll);
+  }
+
+  @UseGuards(GatewayAdminGuard) // --> Use the guard
+  @SubscribeMessage('close_poll')
+  async closePoll(@ConnectedSocket() client: SocketWithAuth): Promise<void> {
+    this.logger.debug(
+      `Closing poll with id ${client.pollID} and computing the results !`,
+    );
+
+    const updatedPoll = await this.pollsService.computeResults(client.pollID);
+
+    this.io.to(client.pollID).emit('poll_updated', updatedPoll);
+  }
+
+  @UseGuards(GatewayAdminGuard) // --> Use the guard
+  @SubscribeMessage('cancel_poll')
+  async cancelPoll(@ConnectedSocket() client: SocketWithAuth): Promise<void> {
+    this.logger.debug(`Canceling poll with id ${client.pollID} !`);
+    await this.pollsService.cancelPoll(client.pollID);
+
+    this.io.to(client.pollID).emit('poll_cancelled');
   }
 }

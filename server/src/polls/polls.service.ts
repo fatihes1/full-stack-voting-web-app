@@ -11,6 +11,7 @@ import {
 import { createPollID, createUserID, createNominationID } from '../ids';
 import { PollsRepository } from './polls.repository';
 import { Poll } from 'shared';
+import getResults from './getResults';
 
 @Injectable() // -> This is a decorator that allows us to inject this service into other services and controllers or modules
 export class PollsService {
@@ -147,7 +148,22 @@ export class PollsService {
         `Participants con not rank until the poll has started`,
       );
     }
-
     return this.pollsRepository.addParticipantRankings(rankingsData);
+  }
+
+  async computeResults(pollID: string): Promise<Poll> {
+    const poll = await this.pollsRepository.getPoll(pollID);
+
+    const result = getResults(
+      poll.rankings,
+      poll.nominations,
+      poll.votesPerVoter,
+    );
+
+    return this.pollsRepository.addResults(pollID, result);
+  }
+
+  async cancelPoll(pollID: string): Promise<void> {
+    await this.pollsRepository.deletePoll(pollID);
   }
 }
