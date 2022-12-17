@@ -1,6 +1,7 @@
 // Define some parameters for incoming fields to our service methods.
 import { Request } from 'express';
 import { Socket } from 'socket.io';
+import { Nomination } from 'shared';
 
 // SERVICE TYPES
 export type CreatePollFields = {
@@ -26,6 +27,12 @@ export type AddParticipantFields = {
   name: string;
 };
 
+export type AddNominationFields = {
+  pollID: string;
+  userID: string;
+  text: string;
+};
+
 // REPOSITORY TYPES
 export type CreatePollData = {
   pollID: string;
@@ -38,6 +45,14 @@ export type AddParticipantData = {
   pollID: string;
   userID: string;
   name: string;
+};
+
+// Nominations type
+
+export type AddNominationData = {
+  pollID: string;
+  nominationID: string;
+  nomination: Nomination;
 };
 
 // GUARD TYPES
