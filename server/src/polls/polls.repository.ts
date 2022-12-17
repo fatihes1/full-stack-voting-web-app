@@ -1,5 +1,4 @@
 import {
-  BadRequestException,
   Inject,
   Injectable,
   InternalServerErrorException,
@@ -14,7 +13,7 @@ import { Poll } from 'shared'; // <-- This is the shared poll type
 @Injectable() // --> This Injectable which allows us to provide this repository as a service or provider (Etc: PollsModule)
 export class PollsRepository {
   // to use time-to-live (ttl) from configuration
-  private readonly ttl: number; // End up storing how long the poll is going to be available for in the database.
+  private readonly ttl: string; // End up storing how long the poll is going to be available for in the database.
   private readonly logger = new Logger(PollsRepository.name);
 
   constructor(
@@ -37,6 +36,7 @@ export class PollsRepository {
       votesPerVoter,
       participants: {}, // Initialize with the no participants
       adminID: userID,
+      hasStarted: false,
     };
 
     this.logger.log(
@@ -51,7 +51,7 @@ export class PollsRepository {
       await this.redisClient // access redis IO client
         .multi([
           ['send_command', 'JSON.SET', key, '.', JSON.stringify(initialPoll)],
-          ['expire', key, String(this.ttl)], // NOT SURE, normally this.ttl is enough
+          ['expire', key, this.ttl], // NOT SURE, normally this.ttl is enough
         ])
         .exec();
       return initialPoll;
@@ -96,11 +96,11 @@ export class PollsRepository {
     name,
   }: AddParticipantData): Promise<Poll> {
     this.logger.log(
-      `Attempting to add participant id/name: ${userID}/${name} to poll: ${pollID}`,
+      `Attempting to add a participant with userID/name: ${userID}/${name} to pollID: ${pollID}`,
     );
-    const key = `polls:${pollID}`;
 
-    const participantPath = `.participants.${userID}`; // <-- This is the path to the participants object
+    const key = `polls:${pollID}`;
+    const participantPath = `.participants.${userID}`;
 
     try {
       await this.redisClient.send_command(
@@ -110,25 +110,31 @@ export class PollsRepository {
         JSON.stringify(name),
       );
 
-      const pollJSON = await this.redisClient.send_command(
-        'JSON.GET',
-        key,
-        '.',
-      );
-
-      const poll = JSON.parse(pollJSON) as Poll; // <-- This is the poll object
-
-      this.logger.debug(
-        `Current participants for poll: ${pollID}: `,
-        poll.participants,
-      );
-
-      return poll;
+      return this.getPoll(pollID);
     } catch (e) {
       this.logger.error(
-        `Failed to add participant id/name: ${userID}/${name} to poll: ${pollID}`,
+        `Failed to add a participant with userID/name: ${userID}/${name} to pollID: ${pollID}`,
       );
       throw e;
+    }
+  }
+
+  async removeParticipant(pollID: string, userID: string): Promise<Poll> {
+    this.logger.log(`removing userID: ${userID} from poll: ${pollID}`);
+
+    const key = `polls:${pollID}`;
+    const participantPath = `.participants.${userID}`;
+
+    try {
+      await this.redisClient.send_command('JSON.DEL', key, participantPath);
+
+      return this.getPoll(pollID);
+    } catch (e) {
+      this.logger.error(
+        `Failed to remove userID: ${userID} from poll: ${pollID}`,
+        e,
+      );
+      throw new InternalServerErrorException('Failed to remove participant');
     }
   }
 }

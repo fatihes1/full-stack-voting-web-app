@@ -20,6 +20,12 @@ export type RejoinPollFields = {
   name: string;
 };
 
+export type AddParticipantFields = {
+  pollID: string;
+  userID: string;
+  name: string;
+};
+
 // REPOSITORY TYPES
 export type CreatePollData = {
   pollID: string;
@@ -35,7 +41,8 @@ export type AddParticipantData = {
 };
 
 // GUARD TYPES
-type AuthPayload = {
+// exported for the gateway-admin.guard.ts file
+export type AuthPayload = {
   userID: string;
   pollID: string;
   name: string;

@@ -1,8 +1,14 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { CreatePollFields, JoinPollFields, RejoinPollFields } from './types';
+import {
+  AddParticipantFields,
+  CreatePollFields,
+  JoinPollFields,
+  RejoinPollFields,
+} from './types';
 import { createPollID, createUserID } from '../ids';
 import { PollsRepository } from './polls.repository';
+import { Poll } from 'shared';
 
 @Injectable() // -> This is a decorator that allows us to inject this service into other services and controllers or modules
 export class PollsService {
@@ -55,7 +61,7 @@ export class PollsService {
     const joinedPoll = await this.pollsRepository.getPoll(fields.pollID);
 
     this.logger.debug(
-      `Creating token string for user with ID: ${userID} for poll with ID: ${joinedPoll.id}`,
+      `Creating token string for user with ID: ${userID} / ${fields.name} for poll with ID: ${joinedPoll.id}`,
     );
 
     const signedString = this.jwtService.sign(
@@ -81,5 +87,28 @@ export class PollsService {
     const joinedPol = await this.pollsRepository.addParticipant(fields);
     return joinedPol;
     // return await this.pollsRepository.addParticipant(fields); // <-- This is the same as the above
+  }
+
+  async addParticipant(addParticipant: AddParticipantFields): Promise<Poll> {
+    return this.pollsRepository.addParticipant(addParticipant);
+  }
+
+  async removeParticipant(
+    pollID: string,
+    userID: string,
+  ): Promise<Poll | void> {
+    const poll = await this.pollsRepository.getPoll(pollID);
+
+    if (!poll.hasStarted) {
+      const updatedPoll = await this.pollsRepository.removeParticipant(
+        pollID,
+        userID,
+      );
+      return updatedPoll;
+    }
+  }
+
+  async getPoll(pollID: string): Promise<Poll> {
+    return await this.pollsRepository.getPoll(pollID);
   }
 }
