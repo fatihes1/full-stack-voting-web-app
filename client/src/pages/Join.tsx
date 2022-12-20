@@ -1,7 +1,7 @@
-import React, {useState} from 'react';
-import {actions, AppPage} from "../state";
-import {makeRequest} from "../api";
-import {Poll} from "shared";
+import React, { useState } from 'react';
+import { Poll } from 'shared/poll-types';
+import { makeRequest } from '../api';
+import { actions, AppPage } from '../state';
 
 const Join: React.FC = () => {
     const [pollID, setPollID] = useState('');
@@ -9,11 +9,16 @@ const Join: React.FC = () => {
     const [apiError, setApiError] = useState('');
 
     const areFieldsValid = (): boolean => {
-        if (pollID.length < 4 || pollID.length > 4) return false;
-        if (name.length < 1 || name.length > 25) return false;
+        if (pollID.length < 4 || pollID.length > 4) {
+            return false;
+        }
+
+        if (name.length < 1 || name.length > 25) {
+            return false;
+        }
 
         return true;
-    }
+    };
 
     const handleJoinPoll = async () => {
         actions.startLoading();
@@ -22,21 +27,18 @@ const Join: React.FC = () => {
         const { data, error } = await makeRequest<{
             poll: Poll;
             accessToken: string;
-        }>(
-            '/polls/join', {
-                method: 'POST',
-                body: JSON.stringify({
-                    pollID,
-                    name,
-                }),
-            });
-
-        console.log(data, error);
+        }>('/polls/join', {
+            method: 'POST',
+            body: JSON.stringify({
+                pollID,
+                name,
+            }),
+        });
 
         if (error && error.statusCode === 400) {
-            setApiError('Please make sure to include a poll topic');
-        } else if ( error && !error.statusCode) {
-            setApiError('Unknown API error')
+            setApiError('Please make sure to include a poll topic!');
+        } else if (error && !error.statusCode) {
+            setApiError('Unknown API error');
         } else {
             actions.initializePoll(data.poll);
             actions.setPollAccessToken(data.accessToken);
@@ -44,14 +46,14 @@ const Join: React.FC = () => {
         }
 
         actions.stopLoading();
-    }
+    };
 
     return (
         <div className="flex flex-col w-full justify-around items-stretch h-full mx-auto max-w-sm">
             <div className="mb-12">
                 <div className="my-4">
                     <h3 className="text-center">
-                        Enter Code Provided By &quot;Friend&quot;
+                        Enter Code Provided by &quot;Friend&quot;
                     </h3>
                     <div className="text-center w-full">
                         <input
@@ -59,14 +61,12 @@ const Join: React.FC = () => {
                             onChange={(e) => setPollID(e.target.value.toUpperCase())}
                             className="box info w-full"
                             autoCapitalize="characters"
-                            style={{textTransform: 'uppercase'}}
+                            style={{ textTransform: 'uppercase' }}
                         />
                     </div>
                 </div>
                 <div className="my-4">
-                    <h3 className="text-center">
-                        Your Name
-                    </h3>
+                    <h3 className="text-center">Your Name</h3>
                     <div className="text-center w-full">
                         <input
                             maxLength={25}
@@ -95,7 +95,7 @@ const Join: React.FC = () => {
                 </button>
             </div>
         </div>
-    )
+    );
 };
 
 export default Join;

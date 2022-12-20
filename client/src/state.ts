@@ -1,12 +1,11 @@
-import {proxy, ref} from 'valtio'
-import {Poll} from "shared";
-import {derive, subscribeKey} from "valtio/utils";
-import {getTokenPayload} from "./util";
-import {Socket} from "socket.io-client";
-import {createSocketWithHandlers, socketIOUrl} from "./socket-io";
+import { Poll } from 'shared/poll-types';
+import { Socket } from 'socket.io-client';
+import { proxy, ref } from 'valtio';
+import { derive, subscribeKey } from 'valtio/utils';
+import { createSocketWithHandlers, socketIOUrl } from './socket-io';
+import { getTokenPayload } from './util';
 
 export enum AppPage {
-    // store possible pages
     Welcome = 'welcome',
     Create = 'create',
     Join = 'join',
@@ -16,9 +15,8 @@ export enum AppPage {
 type Me = {
     id: string;
     name: string;
-}
+};
 
-// hold the current page
 export type AppState = {
     isLoading: boolean;
     me?: Me;
@@ -26,9 +24,8 @@ export type AppState = {
     poll?: Poll;
     accessToken?: string;
     socket?: Socket;
-}
+};
 
-// initial state
 const state: AppState = proxy({
     isLoading: false,
     currentPage: AppPage.Welcome,
@@ -54,17 +51,16 @@ const stateWithComputed: AppState = derive(
             if (!get(state).me) {
                 return false;
             }
-            // After creating a poll, the user is the admin
             return get(state).me?.id === get(state).poll?.adminID;
-        }
+        },
     },
     {
         proxy: state,
     }
-)
+);
 
 const actions = {
-    setPage: (page: AppPage) => {
+    setPage: (page: AppPage): void => {
         state.currentPage = page;
     },
     startOver: (): void => {
@@ -83,7 +79,7 @@ const actions = {
         state.accessToken = token;
     },
     initializeSocket: (): void => {
-        if(!state.socket) {
+        if (!state.socket) {
             state.socket = ref(
                 createSocketWithHandlers({
                     socketIOUrl,
@@ -97,7 +93,7 @@ const actions = {
     },
     updatePoll: (poll: Poll): void => {
         state.poll = poll;
-    }
+    },
 };
 
 subscribeKey(state, 'accessToken', () => {
