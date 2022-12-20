@@ -33,7 +33,7 @@ export const createSocketWithHandlers = ({
 
     socket.on('connect_error', () => {
         console.log("Failed to connect socket");
-
+        // test
         actions.stopLoading();
     })
 
