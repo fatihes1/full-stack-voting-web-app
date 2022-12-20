@@ -45,6 +45,7 @@ const App: React.FC = () => {
         actions.setPollAccessToken(accessToken); // needed for socket.io connection
         // socket initialization on server sends updated poll to the client
         actions.initializeSocket();
+        actions.stopLoading();
     }, []);
 
     return (

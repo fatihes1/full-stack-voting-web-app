@@ -1,7 +1,7 @@
-import React from 'react';
-import { CSSTransition } from "react-transition-group";
+import React, {useEffect} from 'react';
+import {CSSTransition} from "react-transition-group";
 import Welcome from './pages/Welcome';
-import {AppPage, state} from "./state";
+import {actions, AppPage, state} from "./state";
 import Create from "./pages/Create";
 import Join from "./pages/Join";
 import {useSnapshot} from "valtio";
@@ -17,6 +17,15 @@ const routeConfig = {
 
 const Pages: React.FC = () => {
     const currentState = useSnapshot(state);
+
+    useEffect(() => {
+        if (currentState.me?.id && !currentState.poll?.hasStarted) {
+            actions.setPage(AppPage.WaitingRoom)
+        }
+
+        // add sequential check here
+    }, [currentState.me?.id, currentState.poll?.hasStarted]);
+
     return (
         <>
             {Object.entries(routeConfig).map(([page, Component]) => (
