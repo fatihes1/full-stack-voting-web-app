@@ -19,7 +19,7 @@ const Pages: React.FC = () => {
     const currentState = useSnapshot(state);
 
     useEffect(() => {
-        if (currentState.me?.id && !currentState.poll?.hasStarted) {
+        if (currentState.me?.id && currentState.poll && !currentState.poll?.hasStarted) {
             actions.setPage(AppPage.WaitingRoom)
         }
 
@@ -27,20 +27,21 @@ const Pages: React.FC = () => {
     }, [currentState.me?.id, currentState.poll?.hasStarted]);
 
     return (
-        <>
-            {Object.entries(routeConfig).map(([page, Component]) => (
-                <CSSTransition
-                    key={page}
-                    in={currentState.currentPage === page}
-                    timeout={300}
-                    classNames="page"
-                    unmountOnExit>
-                    <div className="page mobile-height max-w-screen-sm mx-auto py-8 px-4 overflow-y-auto">
-                        <Component />
-                    </div>
-                </CSSTransition>
-            ))}
-        </>
+      <>
+          {Object.entries(routeConfig).map(([page, Component]) => (
+            <CSSTransition
+              key={page}
+              in={page === currentState.currentPage}
+              timeout={300}
+              classNames="page"
+              unmountOnExit
+            >
+                <div className="page mobile-height max-w-screen-sm mx-auto py-8 px-4 overflow-y-auto">
+                    <Component />
+                </div>
+            </CSSTransition>
+          ))}
+      </>
 
     )
 };

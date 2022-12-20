@@ -7,6 +7,7 @@ import {actions, state} from './state';
 import {useSnapshot} from "valtio";
 import Loader from "./components/ui/Loader";
 import {getTokenPayload} from "./util";
+import SnackBar from './components/ui/SnackBar';
 
 
 devtools(state, 'app state');
@@ -51,6 +52,17 @@ const App: React.FC = () => {
     return (
         <>
             <Loader color="orange" isLoading={currentState.isLoading} width={120} />
+            {currentState.wsErrors.map((error) =>(
+                <SnackBar
+                    key={error.id}
+                    message={error.message}
+                    type="error"
+                    title={error.type}
+                    onClose={() => actions.removeWsError(error.id)}
+                    show={true}
+                    autoCloseDuration={5000}
+                />
+            ))}
             <Pages />
         </>
     )
