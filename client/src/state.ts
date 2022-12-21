@@ -11,6 +11,8 @@ export enum AppPage {
     Create = 'create',
     Join = 'join',
     WaitingRoom = 'waiting-room',
+    Voting = 'voting',
+    Results = 'results',
 }
 
 type Me = {
@@ -39,6 +41,8 @@ export type AppState = {
     nominationCount: number;
     participantCount: number;
     canStartVote: boolean;
+    hasVoted: boolean;
+    rankingsCount: number;
 };
 
 const state = proxy<AppState>({
@@ -72,7 +76,16 @@ const state = proxy<AppState>({
     get canStartVote() {
         const votesPerVoter = this.poll?.votesPerVoter ?? 100;
 
-        return this.nominationCount >= votesPerVoter * this.participantCount;
+        return this.nominationCount >= votesPerVoter ;
+    },
+    get hasVoted() {
+        const rankings = this.poll?.rankings || {};
+        const userID = this.me?.id || '';
+
+        return rankings[userID] !== undefined ? true : false;
+    },
+    get rankingsCount() {
+        return Object.keys(this.poll?.rankings || {}).length;
     }
 });
 
@@ -102,15 +115,23 @@ const actions = {
                     actions,
                 })
             );
-        } else {
-            state.socket.connect();
+            return;
         }
+        if(!state.socket.connected) {
+            state.socket.connect();
+            return;
+        }
+
+        actions.stopLoading();
     },
     updatePoll: (poll: Poll): void => {
         state.poll = poll;
     },
     nominate: (text: string): void => {
         state.socket?.emit('nominate', {text});
+    },
+    closePoll: (): void => {
+      state.socket?.emit('close_poll');
     },
     startOver: (): void => {
       actions.reset();
@@ -133,6 +154,12 @@ const actions = {
     },
     startVote: (): void => {
       state.socket?.emit('start_vote');
+    },
+    submitRankings: (rankings: string[]): void => {
+      state.socket?.emit('submit_rankings', {rankings});
+    },
+    cancelPoll: (): void => {
+        state.socket?.emit('cancel_poll');
     },
     addWsError: (error: WsError): void => {
         state.wsErrors = [
