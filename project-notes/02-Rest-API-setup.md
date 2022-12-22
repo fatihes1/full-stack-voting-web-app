@@ -37,7 +37,7 @@ REDIS_HOST=localhost
 ```
 Ardından, CORS'u dinamik olarak yapılandırmak için uygulamada özel bir yöntem çağıracağız.
 
-```
+```ts
   const configService = app.get(ConfigService);
   const port = parseInt(configService.get('PORT'));
   const clientPort = parseInt(configService.get('CLIENT_PORT'));
@@ -55,7 +55,7 @@ Ardından, CORS'u dinamik olarak yapılandırmak için uygulamada özel bir yön
 
 Daha sonra uygulama factory'sinde `cors` yapılandırmasını temizliyoruz.
 
-```
+```ts
 const app = await NestFactory.create(AppModule);
 ```
 
