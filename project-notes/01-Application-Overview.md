@@ -1,7 +1,8 @@
 ﻿# Uygulamaya Genel Bakış
 
 Aşağıdaki şekil, bu uygulamayı oluşturmak için kullanacağımız araçlara, dillere veya çerçevelere genel bir bakış sunar.
-![01-Application-Overview](https://user-images.githubusercontent.com/54971670/209135122-8b4499d8-0ea3-4844-9493-244c4113159f.png)
+
+![nest1](https://user-images.githubusercontent.com/54971670/209147191-37124fec-734d-474d-ad49-25c7731a14bd.PNG)
 
 ### Proje Kök Dizinine Genel Bakış
 Proje kökünde birkaç önemli dosyamız var. İlk önce bir `package.json`'umuz var. Bu, tüm uygulamalarımızı npm paketlerini veya npm komutlarıyla projeyi çalıştırmak için betikler içeren oldukça basit bir dosyadır. İstemci ve sunucu dizinle uygulamalarımız için de `workspaces` altında tanımlarız. Bu uygulamalara birazdan geleceğiz. Bunları projenin kökünden ayrı olarak başlatabilir veya `npm run start` kullanarak hepsini çalıştırabiliriz.
