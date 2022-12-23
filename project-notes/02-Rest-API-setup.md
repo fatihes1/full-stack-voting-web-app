@@ -37,7 +37,7 @@ REDIS_HOST=localhost
 ```
 Ardından, CORS'u dinamik olarak yapılandırmak için uygulamada özel bir yöntem çağıracağız.
 
-```ts
+```
   const configService = app.get(ConfigService);
   const port = parseInt(configService.get('PORT'));
   const clientPort = parseInt(configService.get('CLIENT_PORT'));
@@ -55,7 +55,7 @@ Ardından, CORS'u dinamik olarak yapılandırmak için uygulamada özel bir yön
 
 Daha sonra uygulama factory'sinde `cors` yapılandırmasını temizliyoruz.
 
-```ts
+```
 const app = await NestFactory.create(AppModule);
 ```
 
@@ -69,6 +69,172 @@ Denetleyiciler, istemcilerden gelen istekleri ve istemcilere giden yanıtları i
 
 ### Polls (Anket) Modülünün Oluşturulması
 
-... will continue
+`PollsModule`'umuzu oluşturalım. Bunu yapmak için, "`anket`" (poll) işlevimizi gruplandırmak için yeni bir klasör ekleyelim. İçinde bir `polls.module.ts` dosyası oluşturacağız.
 
+`Module` dekoratörünü en üstteki `@nestjs`'den içe aktarmamız gerekecek.
 
+```ts
+import { Module } from '@nestjs/common';
+```
+Bu ekleme işleminden sonra, daha önce bahsedilen `ConfigModule`'ü de içe aktarıyoruz.
+
+```ts
+import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
+```
+İçeri aktarma işlemlerinden hemen sonra `PollsModule` sınıfını oluştururuz.
+
+```ts
+@Module({
+  imports: [ConfigModule],
+  controllers: [],
+  providers: [],
+})
+export class PollsModule {}
+```
+Bu modül boyunca ortam değişkenimize erişebilmek isteyeceğimizden, `ConfigModule`'ü içe aktardığımıza eklediğimize dikkat edin. Bu modüle nasıl erişebileceğimizi daha sonra göreceğiz.
+
+Artık bir Anketler (Polls) modülümüz olduğuna göre, uygulamanın bunu bilmesine ihtiyacımız var. Bu nedenle, bu modülü içe aktarıp `app.module.ts` dosyasına kaydedeceğiz.
+
+```ts
+import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
+import { PollsModule } from './polls/polls.module';
+
+@Module({
+  imports: [ConfigModule.forRoot(), PollsModule],
+  controllers: [],
+  providers: [],
+})
+export class AppModule {}
+```
+Şimdi projemizi sunucuyu ayağa kaldırmak için gerekli olacak olan `nest start --watch` komutunu çalıştıracağız. `docker`'ın çalıştığından emin olduktan sonra `package.json` dosyasının içinde tanımlı olan betiklerden `npm run start`'ı proje kök dizininde çalıştıralım.
+
+### Polls Controller ve Uç Noktaların Tanımlanması
+
+Artık nihayet bir denetleyici oluşturmaya hazırız. Bunu bir `polls.controller.ts` dosyası oluşturarak yapıyoruz.
+
+Bu sınıf tabanlı çerçevelerde sık sık yapacağımız gibi, bu anket denetleyicisi için bir sınıf oluşturalım. Bu denetleyiciyi `Nest`'in yerleşik `@Controller` dekoratörüyle süsleyeceğiz.
+
+```ts
+import { Controller, Logger, Post, Body } from '@nestjs/common';
+
+@Controller('polls')
+export class PollsController {
+  // TODO - add constructor for access to providers!
+}
+```
+Ardından, bir anket oluşturmak, katılmak ve yeniden katılmak için rotaları/yönlendirmeleri (route) tanımlayacağız. Bunu class içerisinde dekore edilmiş bir method ile aşağıdaki gibi yapıyoruz.
+
+```ts
+@Controller('polls')
+export class PollsController {
+  // TODO - add constructor for access to providers!
+
+  @Post()
+  async create() {
+    Logger.log('In create!');
+  }
+
+  @Post('/join')
+  async join() {
+    Logger.log('In join!');
+  }
+
+  @Post('/rejoin')
+  async rejoin() {
+    Logger.log('In rejoin!');
+  }
+}
+```
+Bu, `POST` isteklerini `localhost:8080/polls`, `localhost:8080/polls/join` ve `localhost:8080/polls/rejoin` adreslerine göndermemize izin verecektir.
+
+*Bunları Postman'da test edebilirsiniz.*
+
+### Uç Noktalar İçin İstek Verisi (Body) Tanımlama
+Ancak müşteriden gelen herhangi bir veriyi gerçekten nasıl yakalayabiliriz? `NestJS` bunun için de bize güzel bir dekoratör sağlamıştır.
+
+Bu dekoratörleri kullanmak için, önce istek gövdesinde ne beklediğimizi tanımlayacak bazı TypeScript türleri, bu durumda sınıflar oluşturacağız.
+
+Türlerimizi (Type) saklayacak bir `dtos.ts` dosyası oluşturacağız.
+```ts
+import { Length, IsInt, IsString, Min, Max } from 'class-validator';
+
+export class CreatePollDto {
+  @IsString()
+  @Length(1, 100)
+  topic: string;
+
+  @IsInt()
+  @Min(1)
+  @Max(5)
+  votesPerVoter: number;
+
+  @IsString()
+  @Length(1, 25)
+  name: string;
+}
+
+export class JoinPollDto {
+  @IsString()
+  @Length(6, 6)
+  pollID: string;
+
+  @IsString()
+  @Length(1, 18)
+  name: string;
+}
+```
+Bu kodda, gelen verileri doğrulamaya (validation) da yarayan sınıflar ekliyoruz.
+
+Örneğin, `votesPerVotes` bir tam sayı-integer (veya bir tamsayıya ayrıştıran bir dize- string) olmalıdır. Sınıf alanlarımızı doğrulamak için `class-validator` paketindeki yardımcı programları kullanabiliriz.
+
+Birazdan değineceğimiz `Rejoin` anketi için bir request body tanımı oluşturmayacağız.
+
+Poll Controller'a geri döndüğümüzde, sınıflarımızı bu gövde tanımlarını kullanacak şekilde güncelleyeceğiz.
+
+````ts
+@Controller('polls')
+export class PollsController {
+  // TODO - add constructor for access to providers!
+
+  @Post()
+  async create(@Body() createPollDto: CreatePollDto) {
+    Logger.log('In create!');
+
+    return createPollDto;
+  }
+
+  @Post('/join')
+  async join(@Body() joinPollDto: JoinPollDto) {
+    Logger.log('In join!');
+
+    return joinPollDto;
+  }
+
+  @Post('/rejoin')
+  async rejoin() {
+    Logger.log('In rejoin!');
+    // @TODO - add implementation for extracting user from token
+
+    return {
+      message: 'rejoin endpoint',
+    };
+  }
+}
+```
+
+### Controller'ın Modüle Tanıtılması
+
+Bu şey işe yaramadan önce halletmemiz gereken küçük bir adım var. O da `polls.module.ts` içine kaydetmek için;
+
+```ts
+import { PollsController } from './polls.controller';
+
+@Module({
+  imports: [ConfigModule],
+  controllers: [PollsController],
+  providers: [],
+})
+export class PollsModule {}
+```
