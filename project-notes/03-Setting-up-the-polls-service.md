@@ -1,4 +1,3 @@
-
 # Anket (Polls) Servisinin Oluşturulması
 
 ### Polls Service'e Genel Bakış
@@ -11,7 +10,7 @@ Daha sonra bu verileri oluşturacağımız anket hizmetine ileteceğiz. Bu, hizm
 
 `createPoll` işlevi, diyagramda özetlenen adımları işleyecektir. Redis'te veri almak ve sürdürmek için bir Anket Deposu (Polls Repository) ile etkileşim kurmanın yanı sıra başka bir hizmet olan "JWT Hizmeti" ile çalışmak da dahil olmak üzere burada ele alınması gereken oldukça fazla mantık olduğuna dikkat edin. Bazı uygulamalarda kimlikleri o veri havuzu katmanında veya o veritabanının kendisi aracılığıyla oluşturabilirsiniz, ancak biz devam edip hizmet katmanımızda bununla ilgileneceğiz.
 
-//TODO: Diagram will be here
+![2-server](https://user-images.githubusercontent.com/54971670/209462164-fac0f1e9-307c-4664-a6f9-a94231861350.PNG)
 
 Mevcut bir ankete katılmak ve yeniden katılmak için biraz benzer bir mantık ekleyeceğiz. Her şey söylenip yapıldığında, anket hizmeti, denetleyici ile sağlanan diğer hizmetler veya depolar (repos) arasındaki iş mantığını yönetmek için bir tür aracı olacaktır.
 
@@ -41,14 +40,16 @@ export type RejoinPollFields = {
   name: string;
 };
 ```
+
 Bu türler için son ek (suffix) olarak Alanları (Fields) kullanacağım, ancak bazılarının Seçenekler (Options), Parametreler (Parameters) veya Yapılandırma (Config) kullandığını görebilirsiniz. Hizmet (Service) dönüş değerleri veya nesneleri için, Sonuçlar (Results) son ekiyle benzer türler oluşturacağım.
 
 Şimdilik sonuç veya dönüş türlerini tanımlamayacağız. Şimdilik sadece `type interface` kullanacağız!
 
 Anket hizmeti için bir sınıf ve `polls.service.ts`'de ilk 3 yöntemimizi oluşturalım!
+
 ```ts
-import { Injectable } from '@nestjs/common';
-import { CreatePollFields, JoinPollFields, RejoinPollFields } from './types';
+import { Injectable } from "@nestjs/common";
+import { CreatePollFields, JoinPollFields, RejoinPollFields } from "./types";
 
 @Injectable()
 export class PollsService {
@@ -59,9 +60,11 @@ export class PollsService {
   async rejoinPoll(fields: RejoinPollFields) {}
 }
 ```
+
 Burada çok önemli olan bir şey, `PollsService`'i enjekte edilebilir (Injectable) olarak açıklamamızdır. Bir sınıfı sağlayıcı olarak bu şekilde işaretliyoruz (üzerine gelin veya tanıma bakın). Bu "Injectable" sınıfı daha sonra anketler modülümüze bir sağlayıcı olarak dahil edeceğiz.
 
 ### Poll Service için ID Oluşturucunun Tanımlanması
+
 Bugün herhangi bir veri üzerinde ısrar etmeyeceğimiz için, kullanıcı ve anket kimlikleri oluşturmak için biraz mantık eklemek istiyorum.
 
 Sunucunun `src` klasöründe bir `ids.ts` dosyası oluşturalım. `Nanoid` adında bir ID kütüphanesi kullanacağız. Bu paket, sunucu klasöründeki `package.json `dosyasına yüklenmiştir.
@@ -69,25 +72,27 @@ Sunucunun `src` klasöründe bir `ids.ts` dosyası oluşturalım. `Nanoid` adın
 Aşağıdaki kodu ekliyoruz:
 
 ```ts
-import { customAlphabet, nanoid } from 'nanoid';
+import { customAlphabet, nanoid } from "nanoid";
 
 export const createPollID = customAlphabet(
-  '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ',
-  4,
+  "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+  4
 );
 
 export const createUserID = () => nanoid();
 export const createNominationID = () => nanoid(8);
 ```
+
 `createPollID`'nin "özel bir alfabe" kullandığını unutmayın. Bu, anketlerimiz için yalnızca büyük harf ve rakamlardan oluşan 4 karakterli bir kimlik oluşturmamızı sağlar. Bunun nedeni, oyun için arkadaşlar arasında kolayca paylaşılabilecek veya geçilebilecek bir kimlik oluşturmak istememizdir.
 
 Kullanıcı kimliğimiz (userID), varsayılan uzunluğu 21 karakter olan standart bir `nanoid` olacaktır. Seçenecek/ opsiyon kimliği (`nominationID`) projede daha sonra kullanılacak, ancak sanırım onu ​​şimdi eklesek iyi olur.
 
 Bununla artık servis metotlarında ID'ler oluşturalım.
+
 ```ts
-import { Injectable } from '@nestjs/common';
-import { createPollID, createUserID } from 'src/ids';
-import { CreatePollFields, JoinPollFields, RejoinPollFields } from './types';
+import { Injectable } from "@nestjs/common";
+import { createPollID, createUserID } from "src/ids";
+import { CreatePollFields, JoinPollFields, RejoinPollFields } from "./types";
 
 @Injectable()
 export class PollsService {
@@ -116,6 +121,7 @@ export class PollsService {
   }
 }
 ```
+
 `createPoll`'da hem bir oyun kimliği (`gameID`) hem de bir kullanıcı kimliği (`userID`) oluşturmamız gerekiyor. Sonraki kısımlarda bu kimlikleri nerede sakladığımız ve bunları nasıl kullandığımızla ilgili ayrıntılara gireceğiz.
 
 `joinPoll`'da, müşteri aslında katılmaya çalıştıkları anket için `pollID`'yi sağlayacağından, yalnızca bir kullanıcı kimliği oluşturacağız. Bunu `JoinPollsField` türünü kendimize hatırlatarak görebiliriz.
@@ -123,12 +129,14 @@ export class PollsService {
 Bu, kullanıcının tarayıcısından gelen yetkilendirme verilerinden geleceğinden, şimdilik bir ankete yeniden katılmakla ilgili hiçbir şey yapmayacağız.
 
 ### Polls Controller'ından Polls Service Insider'ına Erişim
+
 Şimdi anketler modülümüzün içindeki diğer sınıflar için anket hizmetimizi erişilebilir hale getirelim. Bunu `polls.module.ts`'nin `Module` dekoratöründe sağlayıcı olarak kaydederek yapıyoruz.
+
 ```ts
-import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
-import { PollsController } from './polls.controller';
-import { PollsService } from './polls.service';
+import { Module } from "@nestjs/common";
+import { ConfigModule } from "@nestjs/config";
+import { PollsController } from "./polls.controller";
+import { PollsService } from "./polls.service";
 
 @Module({
   imports: [ConfigModule],
@@ -137,19 +145,22 @@ import { PollsService } from './polls.service';
 })
 export class PollsModule {}
 ```
+
 Şimdi denetleyicide enjekte edilen (injected) veya sağlanan hizmetimize nasıl eriştiğimizi göstermek istiyorum. İlk olarak, `polls.controller.ts`'nin yapıcısına hizmeti ekliyoruz.
 
 ```ts
-import { PollsService } from './polls.service';
+import { PollsService } from "./polls.service";
 
-@Controller('polls')
+@Controller("polls")
 export class PollsController {
   constructor(private pollsService: PollsService) {}
-  
+
   // rest of code
 }
 ```
+
 Ve servise erişmek için yöntemlerimizi güncelleyelim. Son kez eklediğimiz log ifadesini kaldıracağız ve hizmet yöntemlerimizi çağırmanın sonucunu döndüreceğiz.
+
 ```ts
   @Post()
   async create(@Body() createPollDto: CreatePollDto) {
@@ -176,6 +187,7 @@ Ve servise erişmek için yöntemlerimizi güncelleyelim. Son kez eklediğimiz l
     return result;
   }
 ```
+
 `createPoll` ve `joinPoll` durumunda, bu `DTO`'ları yalnızca yöntemlerin beklediği türe uydukları için geçirebileceğimize dikkat edin.
 
 `rejoinPoll` için verileri bir belirteçten (`token`) çıkaracağız. Şimdilik, onu bazı yapay verilerle dolduracağız.
