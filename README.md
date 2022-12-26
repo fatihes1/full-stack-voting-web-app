@@ -15,6 +15,8 @@
 
 </div>
 
+[Click here](EN_README.md) for English README.
+
 ![nest1](https://user-images.githubusercontent.com/54971670/209147191-37124fec-734d-474d-ad49-25c7731a14bd.PNG)
 
 ## 💾 Projeye Erişmek İçin
